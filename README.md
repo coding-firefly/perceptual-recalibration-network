@@ -16,15 +16,15 @@ The PRN operates under principles of Biological Neuroplasticity, treating the en
 
 1. Meritocratic Confidence Weighting
 
-Every individual tree in the ensemble is assigned a Confidence Rate ($\text{cf\_rate}$), a floating-point value that quantifies its proven historical accuracy and predictive merit.
+Every individual tree in the ensemble is assigned a Confidence Rate, a floating-point value that quantifies its proven historical accuracy and predictive merit.
 
-Mechanism: When a prediction is verified by human feedback (Active Learning), the relevant trees are instantly rewarded by increasing their $\text{cf\_rate}$, granting higher-performing trees greater voting power in the final consensus.
+Mechanism: When a prediction is verified by human feedback (Active Learning), the relevant trees are instantly rewarded by increasing their cf rate, granting higher-performing trees greater voting power in the final consensus.
 
 2. Structural Pruning and Regrowth
 
 To maintain peak performance and combat complexity, the PRN features a strict evolutionary cycle:
 
-Pruning: Periodically, trees falling below a set performance threshold (lowest $\text{cf\_rate}$) are systematically eliminated from the forest, ensuring the ensemble remains efficient.
+Pruning: Periodically, trees falling below a set performance threshold are systematically eliminated from the forest, ensuring the ensemble remains efficient.
 
 Regrowth: New, specialized trees are continuously "birthed" (trained) on a rolling window of the most recent, human-verified data records. This targeted training ensures the model's structure is always adapting to the freshest data patterns, effectively absorbing new concepts.
 
