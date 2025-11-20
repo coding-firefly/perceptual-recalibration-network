@@ -6,7 +6,7 @@ The Perceptual Recalibration Network (PRN) is a novel, self-optimizing machine l
 
 Tracing its conceptual roots to the traditional Random Forest structure, the PRN transforms the static ensemble into a dynamic, evolutionary system capable of continuous, merit-based self-correction in real-time.
 
-Standard ensemble methods, while robust, are typically batch-trained—meaning they are optimized once and then deployed, slowly degrading in performance as underlying data patterns shift. The PRN overcomes this by replacing the static voting mechanism with a fluid, confidence-based architecture that learns and adapts from every single new data point.
+Standard ensemble methods, while robust, are typically batch-trained, meaning they are optimized once and then deployed, slowly degrading in performance as underlying data patterns shift. The PRN overcomes this by replacing the static voting mechanism with a fluid, confidence-based architecture that learns and adapts from every single new data point.
 
 💡 Core Innovation: Biological Neuroplasticity in ML
 
