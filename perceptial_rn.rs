@@ -1,25 +1,25 @@
 use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
-use std::io::{self, BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Clone, Copy)]
-struct HeartData {
-    age: f32,
-    sex: f32,
-    cp: f32,
-    trestbps: f32,
-    chol: f32,
-    fbs: f32,
-    restecg: f32,
-    thalach: f32,
-    exang: f32,
-    oldpeak: f32,
-    slope: f32,
-    ca: f32,
-    thal: f32,
-    target: f32,
+pub struct HeartData {
+    pub age: f32,
+    pub sex: f32,
+    pub cp: f32,
+    pub trestbps: f32,
+    pub chol: f32,
+    pub fbs: f32,
+    pub restecg: f32,
+    pub thalach: f32,
+    pub exang: f32,
+    pub oldpeak: f32,
+    pub slope: f32,
+    pub ca: f32,
+    pub thal: f32,
+    pub target: f32,
 }
 
 impl HeartData {
@@ -43,7 +43,7 @@ impl HeartData {
         }
     }
 
-    fn to_csv_string(&self) -> String {
+    pub fn to_csv_string(&self) -> String {
         format!(
             "{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
             self.age, self.sex, self.cp, self.trestbps, self.chol, self.fbs, 
@@ -54,7 +54,7 @@ impl HeartData {
 }
 
 #[derive(Debug, Clone)]
-enum Node {
+pub enum Node {
     Leaf(bool),
     Branch {
         column: String,
@@ -65,21 +65,21 @@ enum Node {
 }
 
 #[derive(Debug, Clone)]
-struct DecisionTree {
-    uuid: String,
-    path: Vec<String>,
-    cf_rate: f32,
-    root: Node,
+pub struct DecisionTree {
+    pub uuid: String,
+    pub path: Vec<String>,
+    pub cf_rate: f32,
+    pub root: Node,
 }
 
 #[derive(Debug, Clone)]
-struct PatientRecord {
-    case_number: String,
-    name: String,
-    data: HeartData,
-    tree_uuids: Vec<String>,
-    result: bool,
-    verify: Option<bool>,
+pub struct PatientRecord {
+    pub case_number: String,
+    pub name: String,
+    pub data: HeartData,
+    pub tree_uuids: Vec<String>,
+    pub result: bool,
+    pub verify: Option<bool>,
 }
 
 struct SimpleRng {
@@ -135,7 +135,7 @@ fn read_and_split_csv(file_path: &str) -> (Vec<HeartData>, Vec<HeartData>) {
     let mut all_data = Vec::new();
     
     for (i, line) in reader.lines().enumerate() {
-        if i == 0 { continue; }
+        if i == 0 { continue; } 
         if let Ok(l) = line {
             if let Some(record) = parse_line(&l) {
                 all_data.push(record);
@@ -247,7 +247,6 @@ fn generate_forest_and_save(mix: Vec<HeartData>, calibration: &Vec<HeartData>, f
 
     if !calibration.is_empty() {
         println!("Calibrating {} trees against {} proof-check records...", trees.len(), calibration.len());
-        
         for tree in &mut trees {
             let mut correct_count = 0;
             for record in calibration {
@@ -260,7 +259,7 @@ fn generate_forest_and_save(mix: Vec<HeartData>, calibration: &Vec<HeartData>, f
             let accuracy = correct_count as f32 / calibration.len() as f32;
             tree.cf_rate = accuracy;
         }
-        println!("Calibration complete. Tree weights adjusted based on accuracy.");
+        println!("Calibration complete.");
     }
 
     save_forest_to_file(&trees, filename);
@@ -285,7 +284,7 @@ fn serialize_node(node: &Node) -> String {
     }
 }
 
-fn load_forest_from_file(filename: &str) -> Vec<DecisionTree> {
+pub fn load_forest_from_file(filename: &str) -> Vec<DecisionTree> {
     if !Path::new(filename).exists() { return Vec::new(); }
     let file = File::open(filename).expect("Unable to open forest file");
     let reader = BufReader::new(file);
@@ -345,7 +344,7 @@ fn find_split_char(s: &str, target: char) -> usize {
     0
 }
 
-fn random_forest_predict(input: &HeartData, trees: &[DecisionTree]) -> (bool, Vec<(String, usize)>, Vec<String>) {
+pub fn random_forest_predict(input: &HeartData, trees: &[DecisionTree]) -> (bool, Vec<(String, usize)>, Vec<String>) {
     let mut weighted_vote_true = 0.0;
     let mut weighted_vote_false = 0.0;
     let mut col_occurrences: HashMap<String, usize> = HashMap::new();
@@ -395,7 +394,7 @@ fn traverse_tree(node: &Node, input: &HeartData) -> (bool, Vec<String>) {
     }
 }
 
-fn append_patient_record(record: &PatientRecord) {
+pub fn append_patient_record(record: &PatientRecord) {
     let mut file = OpenOptions::new().write(true).append(true).create(true).open("recorder.gsr").expect("Cannot open recorder.gsr");
     let tree_str = record.tree_uuids.join(";");
     let verify_str = match record.verify {
@@ -445,17 +444,28 @@ fn save_all_records(records: &[PatientRecord]) {
     }
 }
 
-fn feedback_loop() {
-    println!("\n--- FEEDBACK MODE ---");
+
+pub fn initialize_system() {
+    if !Path::new("heart.csv").exists() {
+        println!("heart.csv not found. Creating dummy file...");
+        let dummy_data = "age,sex,cp,trestbps,chol,fbs,restecg,thalach,exang,oldpeak,slope,ca,thal,target\n63,1,3,145,233,1,0,150,0,2.3,0,0,1,1\n37,1,2,130,250,0,1,187,0,3.5,0,0,2,1\n41,0,1,130,204,0,0,172,0,1.4,2,0,2,1\n56,1,1,120,236,0,0,178,0,0.8,2,0,2,1\n57,0,0,120,354,0,1,163,1,0.6,2,0,2,1\n57,1,0,140,192,0,1,148,0,0.4,1,0,1,1\n56,0,1,140,294,0,0,153,0,1.3,1,0,2,1\n44,1,1,120,263,0,1,173,0,0.0,2,0,3,1\n52,1,2,172,199,1,1,162,0,0.5,2,0,3,1\n57,1,2,150,168,0,1,174,0,1.6,2,0,2,1\n54,1,0,140,239,0,1,160,0,1.2,2,0,2,1\n48,0,2,130,275,0,1,139,0,0.2,2,0,2,1\n49,1,1,130,266,0,1,171,0,0.6,2,0,2,1\n64,1,3,110,211,0,0,144,1,1.8,1,0,2,1\n58,0,3,150,283,1,0,162,0,1.0,2,0,2,1\n50,0,2,120,219,0,1,158,0,1.6,1,0,2,1\n58,0,2,120,340,0,1,172,0,0.0,2,0,2,1\n66,0,3,150,226,0,1,114,0,2.6,0,0,2,1\n43,1,0,150,247,0,1,171,0,1.5,2,0,2,1\n69,0,3,140,239,0,1,151,0,1.8,2,2,2,1\n59,1,0,135,234,0,1,161,0,0.5,1,0,3,1\n44,1,2,130,233,0,1,179,1,0.4,2,0,2,1\n42,1,0,140,226,0,1,178,0,0.0,2,0,2,1\n61,1,2,150,243,1,1,137,1,1.0,1,0,2,1\n40,1,3,140,199,0,1,178,1,1.4,2,0,3,1\n71,0,1,160,302,0,1,162,0,0.4,2,2,2,1";
+        let mut f = File::create("heart.csv").expect("Unable to create file");
+        f.write_all(dummy_data.as_bytes()).expect("Unable to write data");
+    }
+
+    if !Path::new("forest.gsh").exists() {
+        println!("Training Decision Tree from Data");
+        let (ori, calibration) = read_and_split_csv("heart.csv");
+        let mix = process_ori_to_mix(ori);
+        generate_forest_and_save(mix, &calibration, "forest.gsh", None);
+    }
+}
+
+pub fn run_verification_logic(case_query: &str, status: bool) -> String {
     let mut records = load_patient_records();
     let mut trees = load_forest_from_file("forest.gsh");
 
-    if records.is_empty() { println!("No records found."); return; }
-
-    println!("Enter Case Number to verify:");
-    let mut input = String::new();
-    io::stdin().read_line(&mut input).unwrap();
-    let case_query = input.trim();
+    if records.is_empty() { return "No records found.".to_string(); }
 
     let mut target_idx = None;
     for (i, rec) in records.iter().enumerate() {
@@ -466,22 +476,9 @@ fn feedback_loop() {
     }
 
     if let Some(idx) = target_idx {
-        let rec = &records[idx];
-        println!("Case: {}, Result: {}, Verify: {:?}", rec.case_number, rec.result, rec.verify);
-        println!("Change Verify Status? (t=true/f=false/n=no change):");
-        
-        let mut choice = String::new();
-        io::stdin().read_line(&mut choice).unwrap();
-        let new_status = match choice.trim() {
-            "t" => Some(true),
-            "f" => Some(false),
-            _ => return,
-        };
+        records[idx].verify = Some(status);
 
-        records[idx].verify = new_status;
-
-        if new_status == Some(true) {
-            println!("Verification Positive. Updating Tree Confidence Rates...");
+        if status {
             let winning_uuids = &records[idx].tree_uuids;
             let win_count = winning_uuids.len() as f32;
             let increment = if win_count > 0.0 { 0.1 / win_count } else { 0.0 };
@@ -501,7 +498,6 @@ fn feedback_loop() {
             .collect();
 
         if verified_indices.len() >= 25 {
-            println!("25 Verified records found. Generating new tree and pruning forest...");
             let mut new_data = Vec::new();
             for &v_idx in &verified_indices[0..25] {
                 new_data.push(records[v_idx].data);
@@ -520,124 +516,20 @@ fn feedback_loop() {
 
             trees.sort_by(|a, b| a.cf_rate.partial_cmp(&b.cf_rate).unwrap());
             if !trees.is_empty() {
-                println!("Pruning weakest tree UUID: {} (CF: {})", trees[0].uuid, trees[0].cf_rate);
-                trees.remove(0);
+                trees.remove(0); 
             }
 
             save_forest_to_file(&trees, "forest.gsh");
             let used_cases: Vec<String> = verified_indices[0..25].iter().map(|&i| records[i].case_number.clone()).collect();
             records.retain(|r| !used_cases.contains(&r.case_number));
-            println!("Cycle complete. Forest updated. Records cleaned.");
+            save_all_records(&records);
+            return "Verification successful. Forest updated/pruned.".to_string();
         } else {
             save_forest_to_file(&trees, "forest.gsh");
+            save_all_records(&records);
+            return "Verification successful. Forest updated.".to_string();
         }
-        
-        save_all_records(&records);
-
     } else {
-        println!("Case not found.");
-    }
-}
-
-fn main() {
-    if !Path::new("heart.csv").exists() {
-        println!("heart.csv not found. Creating dummy file...");
-        let dummy_data = "age,sex,cp,trestbps,chol,fbs,restecg,thalach,exang,oldpeak,slope,ca,thal,target\n63,1,3,145,233,1,0,150,0,2.3,0,0,1,1\n37,1,2,130,250,0,1,187,0,3.5,0,0,2,1\n41,0,1,130,204,0,0,172,0,1.4,2,0,2,1\n56,1,1,120,236,0,0,178,0,0.8,2,0,2,1\n57,0,0,120,354,0,1,163,1,0.6,2,0,2,1\n57,1,0,140,192,0,1,148,0,0.4,1,0,1,1\n56,0,1,140,294,0,0,153,0,1.3,1,0,2,1\n44,1,1,120,263,0,1,173,0,0.0,2,0,3,1\n52,1,2,172,199,1,1,162,0,0.5,2,0,3,1\n57,1,2,150,168,0,1,174,0,1.6,2,0,2,1\n54,1,0,140,239,0,1,160,0,1.2,2,0,2,1\n48,0,2,130,275,0,1,139,0,0.2,2,0,2,1\n49,1,1,130,266,0,1,171,0,0.6,2,0,2,1\n64,1,3,110,211,0,0,144,1,1.8,1,0,2,1\n58,0,3,150,283,1,0,162,0,1.0,2,0,2,1\n50,0,2,120,219,0,1,158,0,1.6,1,0,2,1\n58,0,2,120,340,0,1,172,0,0.0,2,0,2,1\n66,0,3,150,226,0,1,114,0,2.6,0,0,2,1\n43,1,0,150,247,0,1,171,0,1.5,2,0,2,1\n69,0,3,140,239,0,1,151,0,1.8,2,2,2,1\n59,1,0,135,234,0,1,161,0,0.5,1,0,3,1\n44,1,2,130,233,0,1,179,1,0.4,2,0,2,1\n42,1,0,140,226,0,1,178,0,0.0,2,0,2,1\n61,1,2,150,243,1,1,137,1,1.0,1,0,2,1\n40,1,3,140,199,0,1,178,1,1.4,2,0,3,1\n71,0,1,160,302,0,1,162,0,0.4,2,2,2,1";
-        let mut f = File::create("heart.csv").expect("Unable to create file");
-        f.write_all(dummy_data.as_bytes()).expect("Unable to write data");
-    }else{
-        println!("heart.csv detected, initialising..")
-    }
-
-    if !Path::new("forest.gsh").exists() {
-        println!("Training Decision Tree from Data");
-        let (ori, calibration) = read_and_split_csv("heart.csv");
-        let mix = process_ori_to_mix(ori);
-        generate_forest_and_save(mix, &calibration, "forest.gsh", None);
-    }
-
-    println!("\n=== MEDICAL AI TERMINAL ===");
-    println!("1. Enter New Patient Data & Predict");
-    println!("2. Verify/Feedback Mode");
-    println!("3. Exit");
-    print!("Select Option: ");
-    io::stdout().flush().unwrap();
-    
-    let mut mode = String::new();
-    io::stdin().read_line(&mut mode).unwrap();
-    
-    match mode.trim() {
-        "1" => {
-            println!("\n--- NEW PATIENT ENTRY ---");
-
-            print!("Enter Case Number: ");
-            io::stdout().flush().unwrap();
-            let mut case_num = String::new();
-            io::stdin().read_line(&mut case_num).unwrap();
-            let case_num = case_num.trim().to_string();
-
-            print!("Enter Patient Name: ");
-            io::stdout().flush().unwrap();
-            let mut p_name = String::new();
-            io::stdin().read_line(&mut p_name).unwrap();
-            let p_name = p_name.trim().to_string();
-
-            let read_float = |prompt: &str| -> f32 {
-                print!("{}: ", prompt);
-                io::stdout().flush().unwrap();
-                let mut input = String::new();
-                io::stdin().read_line(&mut input).unwrap();
-                input.trim().parse::<f32>().unwrap_or(0.0)
-            };
-
-            let age = read_float("Age");
-            let sex = read_float("Sex (1=Male, 0=Female)");
-            let cp = read_float("Chest Pain Type (0-3)");
-            let trestbps = read_float("Resting Blood Pressure");
-            let chol = read_float("Cholesterol");
-            let fbs = read_float("Fasting Blood Sugar > 120 (1=True, 0=False)");
-            let restecg = read_float("Resting ECG (0-2)");
-            let thalach = read_float("Max Heart Rate");
-            let exang = read_float("Exercise Angina (1=Yes, 0=No)");
-            let oldpeak = read_float("Oldpeak (ST depression)");
-            let slope = read_float("Slope (0-2)");
-            let ca = read_float("Major Vessels (0-3)");
-            let thal = read_float("Thal (1=Fixed, 2=Normal, 3=Reversable)");
-            let target = 0.0; 
-
-            let input_data = HeartData {
-                age, sex, cp, trestbps, chol, fbs, restecg, thalach, exang, oldpeak, slope, ca, thal, target
-            };
-
-            println!("\nProcessing Forest...");
-            let trees = load_forest_from_file("forest.gsh");
-            let (result, path_counts, contributing_trees) = random_forest_predict(&input_data, &trees);
-            
-            println!("-----------------------------");
-            println!("PREDICTION: {}", if result { "POSITIVE (1)" } else { "NEGATIVE (0)" });
-            println!("-----------------------------");
-            
-            println!("Most Influential Factors (Top 3):");
-            for (i, (col, count)) in path_counts.iter().enumerate() {
-                if i >= 3 { break; }
-                println!(" - {}: {} checks", col, count);
-            }
-
-            let record = PatientRecord {
-                case_number: case_num,
-                name: p_name,
-                data: input_data,
-                tree_uuids: contributing_trees,
-                result,
-                verify: None 
-            };
-            
-            append_patient_record(&record);
-            println!("\nRecord saved. Pending verification in Mode 2.");
-        },
-        "2" => {
-            feedback_loop();
-        },
-        _ => println!("Exiting."),
+        return "Case not found.".to_string();
     }
 }
